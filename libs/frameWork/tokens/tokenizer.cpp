@@ -3,12 +3,18 @@
 namespace emb::tok {
     using namespace help;
     // -------- Token --------
-    Token::Token()
-        : type(INVALID), data(), lexeme("INVALID"), line(0), column(0) {}
+    Token::Token():
+    type(INVALID),
+    data(),
+    lexeme("INVALID"),
+    line(0), column(0) {}
 
     Token::Token(TokenType type, std::string lexeme, std::vector<std::byte> data,
-                 size_t line, size_t column)
-        : type(type), data(std::move(data)), lexeme(std::move(lexeme)), line(line), column(column) {}
+                 size_t line, size_t column):
+        type(type),
+        data(std::move(data)),
+        lexeme(std::move(lexeme)),
+        line(line), column(column) {}
 
 
     // -------- Tokenizer --------
@@ -38,7 +44,7 @@ namespace emb::tok {
     }
 
     char Tokenizer::next() noexcept {
-        char c = input[current++];
+        const char c = input[current++];
         if (c == '\n') {
             ++line;
             column = 0;
@@ -50,7 +56,8 @@ namespace emb::tok {
 
     char Tokenizer::next(size_t i) noexcept {
         if (i + current < input.size()) {
-            return input[(current += i)];
+            current += i;
+            return input[current];
         }
         return '\0';
     }

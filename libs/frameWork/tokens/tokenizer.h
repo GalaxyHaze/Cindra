@@ -1,8 +1,8 @@
 //
 // Created by dioguabo-rei-delas on 8/13/25.
 //
-#ifndef EMBERSCRIPT_TOKENIZER_H
-#define EMBERSCRIPT_TOKENIZER_H
+#ifndef CINDRA_TOKENIZER_H
+#define CINDRA_TOKENIZER_H
 
 #include <string>
 #include <vector>
@@ -54,4 +54,4 @@ namespace emb::tok {
 
 } // namespace emb
 
-#endif //EMBERSCRIPT_TOKENIZER_H
+#endif //CINDRA_TOKENIZER_H

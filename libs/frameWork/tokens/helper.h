@@ -2,8 +2,8 @@
 // Created by dioguabo-rei-delas on 8/13/25.
 //
 
-#ifndef EMBERSCRIPT_HELPER_H
-#define EMBERSCRIPT_HELPER_H
+#ifndef CINDRA_HELPER_H
+#define CINDRA_HELPER_H
 #include <cstring>
 #include <type_traits>
 #include <cassert>
@@ -62,4 +62,4 @@ namespace emb::help {
 
 //NOTE: Clion é foda! eu possivelmente demoraria uns minutinhos escrevedno tudo, mas ele auto - completou e tornou super eficiente!!!
 
-#endif //EMBERSCRIPT_HELPER_H
+#endif //CINDRA_HELPER_H
