@@ -148,6 +148,9 @@ class FunctionState {
             const auto idx = static_cast<size_t>(e);
             return idx < Size && is_registered_[idx];
         }
+        [[nodiscard]] bool empty() const noexcept {
+            return is_registered_.none();
+        }
 
     private:
         [[noreturn]] static void HandleInvalidState() {

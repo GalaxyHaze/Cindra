@@ -22,6 +22,7 @@ namespace cid::code {
         const vector<uint8_t> code{};
         explicit CODE(const vector<uint8_t>& code) : code(code) {}
         friend auto generateCode(const vector<tok::Token>& );
+        friend int run(const CODE&);
     };
     //NOTE: that is only for tests, that is unsafe, and cannot be used,
     //although if you are confident that your code is truly safe, and do not have erros
@@ -45,9 +46,25 @@ namespace cid::code {
             throw std::runtime_error("Interesting, the code surpass the expected size");
         return CODE(code);
     }
-    //the function is 'int' because that will be the return of the programm
-    inline int run(const CODE&) {
 
+    //the function is 'int' because that will be the return of the programm
+    inline int run(const CODE& src){
+        size_t i = 0;
+        #define NEXT() goto *denseInstructions[static_cast<tok::TokenType>(code[i++])];
+
+        auto OP_Instructions = {&&PRINT, &&RETURN};
+        help::FunctionState<tok::TokenType, 512> denseInstructions({tok::TokenType::PRINT, tok::TokenType::RETURN}, OP_Instructions);
+
+        if (denseInstructions.empty())
+            goto END;
+        else
+            goto *denseInstructions[static_cast<tok::TokenType>(src.code[i])];
+
+        PRINT:
+            auto ptr = src.code.data();
+
+        RETURN:
+        END:
         return 0;
     }
 
