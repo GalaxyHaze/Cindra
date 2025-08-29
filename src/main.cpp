@@ -12,7 +12,7 @@ int main(int argc, const char** argv) {
     const auto buffer = cid::help::openFile(argc, argv);
     const auto tokens = cid::tok::Tokenizer(buffer).tokenize();
     const auto code = cid::code::generateByteCode(tokens);
-    printToken(tokens);
+    cid::code::safeRun(code);
 
     return 0;
 }

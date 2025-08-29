@@ -8,4 +8,5 @@
 #include "tokens/file.h"
 #include "tokens/helper.h"
 #include "containers/unordered_dense_map.h"
+#include "virtualMachine/code.h"
 #endif //CINDRA_CORE_H

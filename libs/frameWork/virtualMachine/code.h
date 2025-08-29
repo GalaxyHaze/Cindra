@@ -9,62 +9,163 @@
 
 namespace cid::code {
 
-    template<class A>
-    inline void insertByte(vector<A>& a, const vector<std::byte>& b) {
-        const size_t s = b.size();
-        auto tmp = reinterpret_cast<const A*>(b.data());
-        for (size_t i = 0; i < s; i++) {
-            a.emplace_back(tmp[i]);
-        }
+
+    // Constrain the template to only allow integral types for safety
+    template<typename A, typename = std::enable_if_t<std::is_integral_v<A>>>
+    inline void insertByte(std::vector<A>& a, const std::vector<std::byte>& b) {
+        // Reserve space in advance to avoid reallocations
+        a.reserve(a.size() + b.size());
+
+        // Use memcpy for potentially better performance than a loop
+        const size_t oldSize = a.size();
+        a.resize(oldSize + b.size());
+        std::memcpy(a.data() + oldSize, b.data(), b.size());
     }
 
     class CODE {
-        const vector<uint8_t> code{};
-        explicit CODE(const vector<uint8_t>& code) : code(code) {}
-        friend auto generateCode(const vector<tok::Token>& );
+    private:
+        std::vector<uint8_t> code;
+
+    public:
+        explicit CODE(std::vector<uint8_t>&& codeVec) : code(std::move(codeVec)) {}
+
+        // Provide access to the code
+        [[nodiscard]] const std::vector<uint8_t>& getCode() const { return code; }
+
+        // Allow the code to be modified if needed
+        std::vector<uint8_t>& getMutableCode() { return code; }
+
+        // Friend declarations for functions that need access to private members
+        friend CODE generateCode(const std::vector<tok::Token>&);
         friend int run(const CODE&);
     };
-    //NOTE: that is only for tests, that is unsafe, and cannot be used,
-    //although if you are confident that your code is truly safe, and do not have erros
-    //you can enable this function, and test your code a lot of times more fast
-    //Because in this verion, the 'compiller' won't do any safe / syntax test
-    auto generateByteCode(const par::CindraParserTree &parser);
-    inline auto generateCode(const vector<tok::Token>& src) {
-        size_t i = 0;
+
+    // Forward declaration for the unsafe bytecode generation
+    CODE generateByteCode(const par::CindraParserTree& parser);
+
+    inline CODE generateByteCode(const std::vector<tok::Token>& src) {
+        // Calculate total size needed
+        size_t totalSize = 0;
         for (const auto& token : src) {
-            i += token.data.size();
+            if (token.type == tok::INT_LITERAL || token.type == tok::STRING_LITERAL) {
+                totalSize += token.data.size();
+            } else {
+                totalSize += 1; // One byte for the token type
+            }
         }
+
         std::vector<uint8_t> code;
-        code.reserve(i);
+        code.reserve(totalSize);
+
         for (const auto& token : src) {
-            if ( token.type == tok::INT_LITERAL || token.type == tok::STRING_LITERAL )
+            if (token.type == tok::INT_LITERAL || token.type == tok::STRING_LITERAL) {
                 insertByte(code, token.data);
-            else
-                code.emplace_back(static_cast<uint8_t>(token.type));
+            } else {
+                code.push_back(static_cast<uint8_t>(token.type));
+            }
         }
-        if ( src.size() != i)
-            throw std::runtime_error("Interesting, the code surpass the expected size");
-        return CODE(code);
+
+        // Check if we used the expected amount of space
+        if (code.size() != totalSize) {
+            throw std::runtime_error("Code size doesn't match expected size");
+        }
+
+        return CODE(std::move(code));
     }
 
-    //the function is 'int' because that will be the return of the programm
-    inline int run(const CODE& src){
+    // The function returns 'int' as the program's exit code
+    inline int safeRun(const CODE& src) {
+        const auto& code = src.getCode();
+        if (code.empty()) {
+            return 0; // Empty program
+        }
+
         size_t i = 0;
-        #define NEXT() goto *denseInstructions[static_cast<tok::TokenType>(code[i++])];
+        int returnValue = 0; // Default return value
 
-        auto OP_Instructions = {&&PRINT, &&RETURN};
-        help::FunctionState<tok::TokenType, 512> denseInstructions({tok::TokenType::PRINT, tok::TokenType::RETURN}, OP_Instructions);
+        // Setup dispatch table for token types
+        // Initialize all entries to END
+        const void* dispatchTable[256] = { &&END };
 
-        if (denseInstructions.empty())
+        // Set up specific handlers for known token types
+        dispatchTable[static_cast<uint8_t>(tok::TokenType::PRINT)] = &&PRINT;
+        dispatchTable[static_cast<uint8_t>(tok::TokenType::RETURN)] = &&RETURN;
+        // Add more handlers as needed for your token types
+
+        // Main dispatch loop
+        DISPATCH:
+        if (i >= code.size()) goto END;
+        goto *dispatchTable[code[i++]];
+
+    PRINT:
+        // Implementation for PRINT instruction
+        {
+            // Check if we have enough bytes for a token type
+            if (i >= code.size()) goto END;
+
+            // Get the next token type to determine what to print
+
+            switch (code[i++]) {
+                case static_cast<uint8_t>(tok::TokenType::INT_LITERAL): {
+                    // Check if we have enough bytes for an integer
+                    if (i + sizeof(int) > code.size()) goto END;
+
+                    int value;
+                    std::memcpy(&value, &code[i], sizeof(int));
+                    i += sizeof(int);
+                    std::cout << value;
+                    break;
+                }
+                case static_cast<uint8_t>(tok::TokenType::STRING_LITERAL): {
+                    // Check if we have at least one byte for the length
+                    if (i >= code.size()) goto END;
+
+                    // Get the string length
+                    size_t strLen = code[i++];
+
+                    // Check if we have enough bytes for the string
+                    if (i + strLen > code.size()) goto END;
+
+                    std::string str(reinterpret_cast<const char*>(&code[i]), strLen);
+                    i += strLen;
+                    std::cout << str;
+                    break;
+                }
+                default:
+                    // Unknown token type for PRINT
+                    goto END;
+            }
+
+            // Continue to next instruction
+            goto DISPATCH;
+        }
+
+    RETURN:
+        // Implementation for RETURN instruction
+        {
+            // Check if we have enough bytes for a return value
+            if (i + sizeof(int) <= code.size()) {
+                std::memcpy(&returnValue, &code[i], sizeof(int));
+            }
             goto END;
-        else
-            goto *denseInstructions[static_cast<tok::TokenType>(src.code[i])];
+        }
+
+    END:
+        return returnValue;
+    }
+    inline int unsafeRun(const CODE& src) {
+        const auto& code = src.getCode();
+        if (code.empty()) {
+            return 0;
+        }
+        size_t i = 0;
+        help::FunctionState<tok::TokenType, 512> dTable;
+        dTable.Register(tok::PRINT, &&PRINT);
+        DISPATCH:
+        goto *dTable[code[i++]];
 
         PRINT:
-            auto ptr = src.code.data();
-
         RETURN:
-        END:
         return 0;
     }
 

@@ -136,6 +136,18 @@ class FunctionState {
             return states_[static_cast<size_t>(e)];
         }
 
+        StatePtr operator[](EnumType e) noexcept {
+            return states_[static_cast<size_t>(e)];
+        }
+
+        StatePtr operator[](size_t e) const noexcept {
+            return states_[e];
+        }
+
+        StatePtr operator[](size_t e) noexcept {
+            return states_[e];
+        }
+
         StatePtr At(EnumType e) const {
             const auto idx = static_cast<size_t>(e);
             if (idx >= Size || !is_registered_[idx]) {
