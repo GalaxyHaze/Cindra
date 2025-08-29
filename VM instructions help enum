@@ -1,0 +1,10 @@
+enum TokenType {
+        INVALID,
+        KEYWORD,
+        IDENTIFIER,
+        INT_LITERAL,
+        STRING_LITERAL,
+        PRINT,
+        RETURN,
+        SEMICOLON
+};
