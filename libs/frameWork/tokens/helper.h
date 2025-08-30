@@ -4,10 +4,15 @@
 #ifndef CINDRA_HELPER_H
 #define CINDRA_HELPER_H
 #include <bitset>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <type_traits>
 #include <vector>
+
+namespace cid::tok {
+    enum TokenType : uint8_t;
+}
 
 namespace cid::help {
     constexpr inline bool isDigit(const char c) {
@@ -48,55 +53,9 @@ namespace cid::help {
         std::memcpy(result.data(), object.data(), size);
         return result;
     }
-    /*template<typename E, typename Vt, size_t Si>
-    class denseStatemachine {
-        std::array<Vt, Si> states;
-        std::array<bool, Si>isStateSigned;
-        std::array<bool, Si>isIndexSigned;
-        std::array<Vt, Si> index[Si];
-        void init() {
-            for ( size_t i = 0; i < Si; i++ ) {
-                isStateSigned[i] = false;
-                isIndexSigned[i] = false;
 
-            }
-        }
-        public:
-        denseStatemachine() {
-            init();
-        }
-        explicit denseStatemachine( const std::vector<E>& states ) {
-            init();
-            for ( const auto& i : states ) {
-                Register(i);
-            }
-        }
-        void Register(E e){
-            if (isStateSigned[static_cast<Vt>(e)])
-                return;
-            for ( size_t i = 0; i < Si; i++ ) {
-                if (!isIndexSigned[i]) {
-                    isStateSigned[i] = true;
-                    isIndexSigned[i] = true;
-                    index[i] = static_cast<Vt>(e);
-                    return;
-                }
-            }
-            throw std::runtime_error("denseVector index out of range");
-        }
-        auto operator[](const Vt dIndex) {
-            return static_cast<E>(index[dIndex]);
-        }
-        auto at(const Vt dIndex) {
-            if (!isIndexSigned[dIndex]) {
-                throw std::runtime_error("denseVector index out of range");
-            }
-            return static_cast<E>(index[dIndex]);
-        }
-
-    };*/
     template<typename EnumType, size_t Size>
-class FunctionState {
+    class FunctionState {
         static_assert(std::is_enum_v<EnumType>, "EnumType must be an enum");
 
         using StatePtr = void*; // For label addresses (GCC/Clang extension)
@@ -171,6 +130,38 @@ class FunctionState {
         }
     };
 
+    template<typename T>
+    bool readSafe(const std::vector<uint8_t>& code, size_t& i, T& out) {
+        if (i + sizeof(T) > code.size()) return false;
+        std::memcpy(&out, &code[i], sizeof(T));
+        i += sizeof(T);
+        return true;
+    }
+
+    inline bool readStringSafe(const std::vector<uint8_t>& code, size_t& i, std::string& out) {
+        if (i >= code.size()) return false;
+        size_t len = code[i++];
+        if (i + len > code.size()) return false;
+        out.assign(reinterpret_cast<const char*>(&code[i]), len);
+        i += len;
+        return true;
+    }
+
+    inline void unsafeString(const uint8_t* src, size_t& i, uint8_t format) {
+
+        auto length = *(++src);
+        switch (format) {
+            case 0:
+                std::cout << reinterpret_cast<const char*>(++src);
+                break;
+            case 1:
+                std::cout << *++src;
+                break;
+            default:
+                break;
+        }
+        i += length;
+    }
 
 
 };
