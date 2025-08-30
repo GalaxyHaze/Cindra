@@ -10,16 +10,10 @@
 namespace cid::code {
 
 
-    // Constrain the template to only allow integral types for safety
-    template<typename A, typename = std::enable_if_t<std::is_integral_v<A>>>
-    inline void insertByte(std::vector<A>& a, const std::vector<std::byte>& b) {
-        // Reserve space in advance to avoid reallocations
-        a.reserve(a.size() + b.size());
-
-        // Use memcpy for potentially better performance than a loop
-        const size_t oldSize = a.size();
-        a.resize(oldSize + b.size());
-        std::memcpy(a.data() + oldSize, b.data(), b.size());
+    inline void insertByte(std::vector<uint8_t>& a, const std::vector<std::byte>& b) {
+        a.insert(a.end(),
+                 reinterpret_cast<const uint8_t*>(b.data()),
+                 reinterpret_cast<const uint8_t*>(b.data()) + b.size());
     }
 
     class CODE {
@@ -49,7 +43,7 @@ namespace cid::code {
         for (const auto& token : src) {
             if (token.type == tok::INT_LITERAL || token.type == tok::STRING_LITERAL) {
                 totalSize += token.data.size();
-            } else {
+            } else if (token.type != tok::SEMICOLON){
                 totalSize += 1; // One byte for the token type
             }
         }
@@ -60,8 +54,8 @@ namespace cid::code {
         for (const auto& token : src) {
             if (token.type == tok::INT_LITERAL || token.type == tok::STRING_LITERAL) {
                 insertByte(code, token.data);
-            } else {
-                code.push_back(static_cast<uint8_t>(token.type));
+            } else if (token.type != tok::SEMICOLON) {
+                code.push_back(token.type);
             }
         }
 
@@ -160,12 +154,15 @@ namespace cid::code {
         }
         size_t i = 0;
         help::FunctionState<tok::TokenType, 512> dTable;
-        dTable.Register(tok::PRINT, &&PRINT);
+        dTable.Register(tok::RETURN, &&RETURN);
         DISPATCH:
         goto *dTable[code[i++]];
 
-        PRINT:
+        //PRINT:
+        //goto DISPATCH;
         RETURN:
+        return code[i];
+        END:
         return 0;
     }
 

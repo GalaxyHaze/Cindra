@@ -1,9 +1,2 @@
-print: "Hello world";
-/*iojwefwjefjewo
-saafafasf
-afasfasfasf
-asfasfasfas
-fasfasfasfa
-fafafasfasfafaf
-*/
-return 0;
+//print: "Hello world";
+return 7;
