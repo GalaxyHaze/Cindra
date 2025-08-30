@@ -4,6 +4,9 @@
 
 #ifndef CINDRA_CODE_H
 #define CINDRA_CODE_H
+#include <string_view>
+#include <type_traits>
+#include <stdexcept>
 #include "../tokens/tokenizer.h"
 #include "../parser/parser.h"
 
@@ -34,15 +37,17 @@ namespace cid::code {
         out.insert(out.end(), p, p + s.size());
     }
 
-    class CODE {
+class CODE {
     private:
         std::vector<uint8_t> code;
-
-    public:
         explicit CODE(std::vector<uint8_t>&& codeVec) : code(std::move(codeVec)) {}
 
+    public:
         [[nodiscard]] const std::vector<uint8_t>& getCode() const { return code; }
-        std::vector<uint8_t>& getMutableCode() { return code; }
+
+        // Only the bytecode generators can construct CODE instances
+        friend CODE unsafePrototypeCode(const std::vector<tok::Token>&);
+        friend CODE generateByteCode(const par::CindraParserTree&);
     };
 
     // Optional forward declaration if planner-based generation is added later
@@ -53,7 +58,7 @@ namespace cid::code {
     //   - INT_LITERAL payload: 4 bytes (int)
     //   - STRING_LITERAL payload: 1-byte length, then bytes (no quotes)
     // - RETURN: [RETURN opcode][4-byte int]
-    inline CODE generateByteCode(const std::vector<tok::Token>& src) {
+    inline CODE unsafePrototypeCode(const std::vector<tok::Token>& src) {
         std::vector<uint8_t> code;
         code.reserve(src.size() * 6); // rough estimate to minimize reallocs
 

@@ -9,10 +9,8 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
-
-namespace cid::tok {
-    enum TokenType : uint8_t;
-}
+#include <array>
+#include "token_type.h"
 
 namespace cid::help {
     constexpr inline bool isDigit(const char c) {

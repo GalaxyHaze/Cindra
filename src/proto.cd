@@ -1,2 +1,2 @@
-print: "Hello world";
-return -128;
+print: -60;
+return 0;

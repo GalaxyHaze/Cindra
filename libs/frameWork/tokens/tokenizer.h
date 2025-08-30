@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cstddef>
+#include "token_type.h"
 #include "helper.h"
 #include <iostream>
 #include "../containers/unordered_dense_map.h"
@@ -17,17 +18,6 @@ using std::cout;
 
 namespace cid::tok {
     using namespace help;
-
-    enum TokenType: uint8_t {
-        INVALID,
-        KEYWORD,
-        IDENTIFIER,
-        INT_LITERAL,
-        STRING_LITERAL,
-        PRINT,
-        RETURN,
-        SEMICOLON
-    };
 
     inline auto setUpkeywords() {
         ankerl::unordered_dense::map<std::string, cid::tok::TokenType> tmp;
