@@ -7,4 +7,6 @@ add_executable(new_target src/main.cpp
         libs/frameWork/core.h
         libs/frameWork/virtualMachine/code.h
         libs/frameWork/parser/parser.h
+        libs/frameWork/dynamicType/dynamicBitSet.h
+        libs/frameWork/dynamicType/lazyAny.h
 )

@@ -139,7 +139,7 @@ namespace cid::tok {
 
                 if (isSpace(c)) continue;
 
-                if (isDigit(c)) {
+                if (isDigit(c) || c == '-' && isDigit(peek(1))) {
                     intProcess(c);
                     continue;
                 }
